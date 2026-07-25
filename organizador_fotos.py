@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -12,11 +13,47 @@ MESES_ESPAÑOL = {
     9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
 }
 
+def extraer_fecha_de_nombre(nombre_archivo):
+    """
+    Busca patrones de fecha tipo YYYYMMDD en el nombre del archivo
+    (común en fotos de WhatsApp como IMG-20241024-WA0047.jpg o VID-20240711-WA0071.mp4).
+    """
+    # Expresión regular para secuencias de 8 dígitos (Año: 1990-2099, Mes: 01-12, Día: 01-31)
+    patron = r'(19[9\d]|20[0-9]\d)(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])'
+    coincidencia = re.search(patron, nombre_archivo)
+    
+    if coincidencia:
+        ano_str, mes_str, dia_str = coincidencia.groups()
+        try:
+            return datetime(int(ano_str), int(mes_str), int(dia_str))
+        except ValueError:
+            pass
+            
+    # Patrón alternativo con separadores (ej: 2024-10-24 o 2024_10_24)
+    patron_separado = r'(19[9\d]|20[0-9]\d)[-_\.](0[1-9]|1[0-2])[-_\.](0[1-9]|[12]\d|3[01])'
+    coincidencia_sep = re.search(patron_separado, nombre_archivo)
+    if coincidencia_sep:
+        ano_str, mes_str, dia_str = coincidencia_sep.groups()
+        try:
+            return datetime(int(ano_str), int(mes_str), int(dia_str))
+        except ValueError:
+            pass
+
+    return None
+
 def obtener_fecha_archivo(ruta_archivo):
     """
-    Intenta obtener la fecha EXIF si es una imagen;
-    si no tiene EXIF o es un video, usa la fecha de modificación del archivo.
+    Jerarquía de extracción de fecha:
+    1. Nombre del archivo (WhatsApp, capturas, etc.)
+    2. Metadatos EXIF
+    3. Fecha de modificación del sistema
     """
+    # 1. Primer intento: verificar el nombre del archivo
+    fecha_nombre = extraer_fecha_de_nombre(ruta_archivo.name)
+    if fecha_nombre:
+        return fecha_nombre
+
+    # 2. Segundo intento: metadatos EXIF (imágenes)
     try:
         imagen = Image.open(ruta_archivo)
         info_exif = imagen._getexif()
@@ -29,63 +66,51 @@ def obtener_fecha_archivo(ruta_archivo):
     except Exception:
         pass
     
-    # Si es video o imagen sin EXIF, usamos la fecha de modificación del sistema
+    # 3. Tercer intento: fecha de modificación del sistema
     timestamp = os.path.getmtime(ruta_archivo)
     return datetime.fromtimestamp(timestamp)
 
 def organizar_carpeta(ruta_objetivo):
     ruta_base = Path(ruta_objetivo)
     
-    # 2. Definir extensiones de fotos y videos
     extensiones_fotos = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.heic', '.raw'}
     extensiones_videos = {'.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.m4v', '.3gp', '.mts'}
     
-    # Unimos ambos conjuntos (solo fotos y videos)
     extensiones_validas = extensiones_fotos.union(extensiones_videos)
     
     archivos_movidos = 0
 
-    # Iterar SOLO sobre los archivos que están en la raíz de la carpeta
     for archivo in ruta_base.iterdir():
-        # Verifica que sea un archivo y que su extensión esté en las permitidas
         if archivo.is_file() and archivo.suffix.lower() in extensiones_validas:
             
-            # Obtener la fecha del archivo
+            # Extraer fecha con el nuevo orden de prioridades
             fecha = obtener_fecha_archivo(archivo)
             
             ano = str(fecha.year)
             mes = MESES_ESPAÑOL[fecha.month]
             dia = str(fecha.day)
             
-            # Crear la estructura de la ruta: CarpetaBase/Año/Mes/Día
             carpeta_destino = ruta_base / ano / mes / dia
-            
-            # Crear las subcarpetas si no existen
             carpeta_destino.mkdir(parents=True, exist_ok=True)
             
-            # Definir la ruta final del archivo
             destino_final = carpeta_destino / archivo.name
             
-            # Control de duplicados
             if destino_final.exists():
                 print(f"[⚠️ Duplicado] El archivo {archivo.name} ya existe en el destino. Se omitió.")
                 continue
                 
-            # Mover el archivo
             shutil.move(str(archivo), str(destino_final))
             
-            # Identificar visualmente en la consola si fue foto o video
             es_video = archivo.suffix.lower() in extensiones_videos
             emoji = "📹 Video" if es_video else "📸 Foto"
             
             print(f"{emoji} movido: {archivo.name} -> {ano}/{mes}/{dia}/")
             archivos_movidos += 1
 
-    print(f"\n🎉 ¡Proceso terminado! Se organizaron {archivos_movidos} archivos (fotos y videos).")
+    print(f"\n🎉 ¡Proceso terminado! Se organizaron {archivos_movidos} archivos.")
 
 if __name__ == "__main__":
-    # Ajusta aquí la ruta de tu carpeta
-    RUTA_DE_PRUEBA = "/home/camper/Documentos/WAStatusSaver" 
+    RUTA_DE_PRUEBA = "/home/camper/Escritorio/IA ciel" 
     
     if os.path.exists(RUTA_DE_PRUEBA):
         print(f"Iniciando organización en: {RUTA_DE_PRUEBA}\n")
