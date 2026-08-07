@@ -11,7 +11,7 @@ from google.genai import types
 # CONFIGURACIÓN
 # ==============================================================================
 # Pega tu API Key de Gemini si no usas variables de entorno
-API_KEY = "AIzaSyCkouMAs7qgB9EQQa_MxlVVeaAuxg3O84I"  # Ej: "AIzaSy..."
+API_KEY = ""  # Ej: "AIzaSy..."
 
 CATEGORIAS = [
     "documentos",
