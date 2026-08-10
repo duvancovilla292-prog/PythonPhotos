@@ -110,7 +110,7 @@ def organizar_carpeta(ruta_objetivo):
     print(f"\n🎉 ¡Proceso terminado! Se organizaron {archivos_movidos} archivos.")
 
 if __name__ == "__main__":
-    RUTA_DE_PRUEBA = "/home/camper/Escritorio/Marzo 26 fe (copia)" 
+    RUTA_DE_PRUEBA = "/storage/emulated/0/Pictures/yo" 
     
     if os.path.exists(RUTA_DE_PRUEBA):
         print(f"Iniciando organización en: {RUTA_DE_PRUEBA}\n")

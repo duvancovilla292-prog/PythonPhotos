@@ -46,7 +46,7 @@ def extraer_archivos(ruta_origen):
 
 if __name__ == "__main__":
     # Ajusta esta ruta a la carpeta donde quieras hacer la extracción
-    RUTA_OBJETIVO = "/home/camper/Escritorio/Marzo 26 fe (copia)" 
+    RUTA_OBJETIVO = "/storage/emulated/0/Download/n"
     
     if os.path.exists(RUTA_OBJETIVO):
         print(f"Iniciando extracción en: {RUTA_OBJETIVO}\n")
