@@ -11,7 +11,7 @@ from PIL import Image
 # CONFIGURACIÓN
 # ==============================================================================
 # Puedes dejar la ruta configurada o dejarla vacía "" para ingresarla por consola
-RUTA_A_OPTIMIZAR = "/storage/emulated/0/Pictures/yo"
+RUTA_A_OPTIMIZAR = "/media/camper/CIEL3/Box/Ciel0/fotos/familia/Rolón Florez/Primos/heidy/2026/Mayo"
 
 # Calidad de imágenes (82-85 es el punto óptimo sin pérdida visual)
 CALIDAD_JPEG = 82
